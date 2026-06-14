@@ -1,0 +1,133 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: jobs.mini-volcano.sh
+  labels:
+    app: mini-volcano
+spec:
+  group: mini-volcano.sh
+  names:
+    kind: Job
+    listKind: JobList
+    plural: jobs
+    singular: job
+    shortNames:
+      - vj
+      - mvj
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.state.phase
+        - name: Queue
+          type: string
+          priority: 1
+          jsonPath: .spec.queue
+        - name: Running
+          type: integer
+          jsonPath: .status.running
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: |
+            Job is the core workload type of mini-volcano. It describes a batch job
+            composed of one or more task groups, each with a pod template and replica count.
+          properties:
+            spec:
+              type: object
+              required:
+                - tasks
+              properties:
+                schedulerName:
+                  type: string
+                  description: |
+                    Scheduler that will place pods; defaults to "mini-volcano".
+                minAvailable:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Minimum number of pods that must be running for the Job to enter Running.
+                    Defaults to the sum of all task replicas.
+                tasks:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                        pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+                      replicas:
+                        type: integer
+                        minimum: 0
+                      template:
+                        type: object
+                        description: |
+                          Pod template. Corresponds to k8s.io/api/core/v1.PodTemplateSpec.
+                        x-kubernetes-preserve-unknown-fields: true
+                      minAvailable:
+                        type: integer
+                        nullable: true
+                        minimum: 0
+                      dependsOn:
+                        type: array
+                        items:
+                          type: string
+                queue:
+                  type: string
+                  default: "default"
+                  description: Queue name this job belongs to.
+                maxRetry:
+                  type: integer
+                  minimum: 0
+                  default: 3
+                  description: Maximum retry count before marking as Failed.
+                ttlSecondsAfterFinished:
+                  type: integer
+                  nullable: true
+                  minimum: 0
+                  description: Auto-cleanup seconds after Job finishes.
+            status:
+              type: object
+              properties:
+                state:
+                  type: object
+                  properties:
+                    phase:
+                      type: string
+                      enum:
+                        - Pending
+                        - Running
+                        - Completed
+                        - Failed
+                        - Terminating
+                    reason:
+                      type: string
+                    message:
+                      type: string
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+                pending:
+                  type: integer
+                running:
+                  type: integer
+                succeeded:
+                  type: integer
+                failed:
+                  type: integer
+                retryCount:
+                  type: integer
+                version:
+                  type: integer

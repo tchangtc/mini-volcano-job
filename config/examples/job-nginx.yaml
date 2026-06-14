@@ -1,0 +1,32 @@
+# Example: a simple mini-volcano Job that runs 3 Nginx pods
+apiVersion: mini-volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: nginx-example
+  namespace: default
+spec:
+  schedulerName: mini-volcano
+  minAvailable: 2
+  queue: default
+  maxRetry: 3
+  tasks:
+    - name: web-server
+      replicas: 3
+      template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: nginx
+              image: nginx:latest
+              ports:
+                - containerPort: 80
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 256Mi

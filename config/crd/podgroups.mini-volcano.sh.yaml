@@ -1,0 +1,70 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: podgroups.mini-volcano.sh
+  labels:
+    app: mini-volcano
+spec:
+  group: mini-volcano.sh
+  names:
+    kind: PodGroup
+    listKind: PodGroupList
+    plural: podgroups
+    singular: podgroup
+    shortNames:
+      - pg
+      - mpg
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: MinMember
+          type: integer
+          jsonPath: .spec.minMember
+        - name: Running
+          type: integer
+          jsonPath: .status.running
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: |
+            PodGroup represents a group of pods that should be scheduled atomically.
+            Every mini-volcano Job owns exactly one PodGroup.
+          properties:
+            spec:
+              type: object
+              properties:
+                minMember:
+                  type: integer
+                  minimum: 0
+                  description: |
+                    Minimum pods that must be assigned before this group is considered running.
+                queue:
+                  type: string
+                  description: Scheduling queue this group belongs to.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum:
+                    - Pending
+                    - Running
+                    - Finished
+                    - Failed
+                running:
+                  type: integer
+                succeeded:
+                  type: integer
+                failed:
+                  type: integer

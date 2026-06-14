@@ -1,0 +1,41 @@
+# Example: a multi-task Job with dependencies
+# The "trainer" task will not start until the "data-loader" task is Running.
+apiVersion: mini-volcano.sh/v1alpha1
+kind: Job
+metadata:
+  name: train-with-deps
+  namespace: default
+spec:
+  schedulerName: mini-volcano
+  minAvailable: 3
+  maxRetry: 1
+  tasks:
+    - name: data-loader
+      replicas: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: loader
+              image: busybox:latest
+              command: ["sh", "-c", "echo loading data... && sleep 30"]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+
+    - name: trainer
+      replicas: 1
+      dependsOn:
+        - data-loader
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: train
+              image: busybox:latest
+              command: ["sh", "-c", "echo training started! && sleep 120"]
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
