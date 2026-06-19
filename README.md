@@ -184,7 +184,9 @@ enqueue → allocate → backfill
 
 ```
 mini-volcano-job/
-├── README.md                           # ← this file
+├── README.md                            # ← this file (English)
+├── README.zh-CN.md                      # 简体中文版 (Simplified Chinese)
+├── README.zh-TW.md                      # 繁體中文版 (Traditional Chinese)
 ├── go.mod                              # Go 1.26 + k8s v0.36
 ├── api/
 │   └── v1alpha1/
